@@ -120,11 +120,7 @@ func main() {
 ```
 
 > [!IMPORTANT]
-> Clients from `server/pubsub` declare themselves as servers. Authenticate them with an API key.
-> Token authentication works only with a token that carries the signed `x-ably-clientType=server`
-> claim, which today means a JWT; with any other token, Ably rejects the connection or request with
-> error 40167. Clients from `device/pubsub` are not affected. See
-> [Server clients and token authentication](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md#server-clients-and-token-authentication).
+> Server clients must authenticate with an API key. To use a token instead, see [Server clients and token authentication](https://ably.com/docs/auth/token#server-token-auth).
 
 ### Device
 
@@ -291,7 +287,6 @@ client, err := pubsub.NewRealtimeClient(
 ## Further reading
 
 - [Getting started with Pub/Sub using Go](https://ably.com/docs/getting-started/go)
-- [SDK setup for Go](https://ably.com/docs/getting-started/setup?lang=go)
 - [Ably Pub/Sub documentation](https://ably.com/docs/basics) and [examples](https://ably.com/examples?product=pubsub)
 - [UPDATING.md](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md): migrating from 1.x
 - [CHANGELOG.md](https://github.com/ably/ably-pubsub-go/blob/main/CHANGELOG.md): release notes; all Ably releases are listed on [changelog.ably.com](https://changelog.ably.com)
