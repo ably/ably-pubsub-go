@@ -1,8 +1,8 @@
-![Ably Pub/Sub Go Header](/image/goSDK-github.png)
+![Ably Pub/Sub Go Header](https://raw.githubusercontent.com/ably/ably-pubsub-go/main/image/goSDK-github.png)
 
 [![Go Reference: server](https://pkg.go.dev/badge/github.com/ably/ably-pubsub-go/v2/server/pubsub.svg)](https://pkg.go.dev/github.com/ably/ably-pubsub-go/v2/server/pubsub)
 [![Go Reference: device](https://pkg.go.dev/badge/github.com/ably/ably-pubsub-go/v2/device/pubsub.svg)](https://pkg.go.dev/github.com/ably/ably-pubsub-go/v2/device/pubsub)
-[![License](https://badgen.net/github/license/ably/ably-go)](./LICENSE)
+[![License](https://badgen.net/github/license/ably/ably-pubsub-go)](https://github.com/ably/ably-pubsub-go/blob/main/LICENSE)
 
 # Ably Pub/Sub Go SDK
 
@@ -39,26 +39,14 @@ go get github.com/ably/ably-pubsub-go/v2/server/pubsub
 go get github.com/ably/ably-pubsub-go/v2/device/pubsub
 ```
 
-### Migrating from 1.x
-
-Version 2 ships under a new module path, and the `github.com/ably/ably-go/ably` package no longer
-exists. Add the entry point you need, remove the 1.x requirement, then change each import and the
-`ably.` qualifiers to `pubsub.`:
-
-```bash
-go get github.com/ably/ably-pubsub-go/v2/server/pubsub   # or .../device/pubsub
-go mod edit -droprequire github.com/ably/ably-go
-```
-
-See [UPDATING.md](./UPDATING.md#version-14x-to-20) for the import mapping, the `REST` to `HTTP`
-renames, behaviour changes and removed APIs.
-
 ## Quick start
 
 ### Server
 
-Use an API key on a server. The following code connects, subscribes to a channel, publishes a
-message to it and waits for the message to arrive.
+Use an API key on a server. The samples read it from the `ABLY_API_KEY` environment variable; set it
+to an API key from your [Ably dashboard](https://ably.com/accounts/any/apps/any/app_keys). The
+following code connects, subscribes to a channel, publishes a message to it and waits for the
+message to arrive.
 
 ```go
 package main
@@ -67,6 +55,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/ably/ably-pubsub-go/v2/server/pubsub"
 )
@@ -74,7 +63,8 @@ import (
 func main() {
 	ctx := context.Background()
 
-	client, err := pubsub.NewRealtimeClient(pubsub.WithKey("xxxxxx.yyyyyy:zzzzzzzz"))
+	ablyAPIKey := os.Getenv("ABLY_API_KEY")
+	client, err := pubsub.NewRealtimeClient(pubsub.WithKey(ablyAPIKey))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,12 +101,14 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/ably/ably-pubsub-go/v2/server/pubsub"
 )
 
 func main() {
-	client, err := pubsub.NewHTTPClient(pubsub.WithKey("xxxxxx.yyyyyy:zzzzzzzz"))
+	ablyAPIKey := os.Getenv("ABLY_API_KEY")
+	client, err := pubsub.NewHTTPClient(pubsub.WithKey(ablyAPIKey))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -132,7 +124,7 @@ func main() {
 > Token authentication works only with a token that carries the signed `x-ably-clientType=server`
 > claim, which today means a JWT; with any other token, Ably rejects the connection or request with
 > error 40167. Clients from `device/pubsub` are not affected. See
-> [Server clients and token authentication](./UPDATING.md#server-clients-and-token-authentication).
+> [Server clients and token authentication](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md#server-clients-and-token-authentication).
 
 ### Device
 
@@ -196,6 +188,20 @@ client, err := pubsub.NewClient(
 )
 ```
 
+## Migrating from 1.x
+
+Version 2.0 moves to a new module path and replaces the `ably` package with server and device
+entry points.
+
+| | 1.x | 2.0 |
+|---|---|---|
+| Module | `github.com/ably/ably-go` | `github.com/ably/ably-pubsub-go/v2` |
+| Import | `github.com/ably/ably-go/ably` | `github.com/ably/ably-pubsub-go/v2/server/pubsub` or `github.com/ably/ably-pubsub-go/v2/device/pubsub` |
+| Realtime client | `ably.NewRealtime(...)` | `pubsub.NewRealtimeClient(...)` (server) or `pubsub.NewClient(...)` (device) |
+| HTTP client | `ably.NewREST(...)` | `pubsub.NewHTTPClient(...)` (server only) |
+
+See [UPDATING.md](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md#version-14x-to-20) for all other changes.
+
 ## Common configuration
 
 Both packages export the same `With...` options. Pass them to the constructors.
@@ -206,8 +212,9 @@ Both packages export the same `With...` options. Pass them to the constructors.
 replaces the 1.x `WithEnvironment`, `WithRESTHost` and `WithRealtimeHost` options.
 
 ```go
+ablyAPIKey := os.Getenv("ABLY_API_KEY")
 client, err := pubsub.NewRealtimeClient(
-	pubsub.WithKey("xxxxxx.yyyyyy:zzzzzzzz"),
+	pubsub.WithKey(ablyAPIKey),
 	pubsub.WithEndpoint("nonprod:sandbox"),
 )
 ```
@@ -215,7 +222,7 @@ client, err := pubsub.NewRealtimeClient(
 Never put a port in the endpoint: `localhost:8080` is not a hostname and does not resolve. Set the
 port with `WithTLSPort` instead, or with `WithPort` when TLS is off (`WithTLS(false)`, which needs
 token authentication). See
-[Host options are replaced by WithEndpoint](./UPDATING.md#host-options-are-replaced-by-withendpoint)
+[Host options are replaced by WithEndpoint](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md#host-options-are-replaced-by-withendpoint)
 for how each value resolves.
 
 ### Proxy
@@ -241,8 +248,9 @@ proxyURL, err := url.Parse("http://proxy.example.com:8080")
 if err != nil {
 	log.Fatal(err)
 }
+ablyAPIKey := os.Getenv("ABLY_API_KEY")
 client, err := pubsub.NewHTTPClient(
-	pubsub.WithKey("xxxxxx.yyyyyy:zzzzzzzz"),
+	pubsub.WithKey(ablyAPIKey),
 	pubsub.WithHTTPClient(&http.Client{
 		Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)},
 	}),
@@ -265,8 +273,9 @@ func (myLogger) Printf(level pubsub.LogLevel, format string, v ...interface{}) {
 	log.Printf(format, v...)
 }
 
+ablyAPIKey := os.Getenv("ABLY_API_KEY")
 client, err := pubsub.NewRealtimeClient(
-	pubsub.WithKey("xxxxxx.yyyyyy:zzzzzzzz"),
+	pubsub.WithKey(ablyAPIKey),
 	pubsub.WithLogLevel(pubsub.LogDebug),
 	pubsub.WithLogHandler(myLogger{}),
 )
@@ -276,7 +285,7 @@ client, err := pubsub.NewRealtimeClient(
 
 - [Push notification targets](https://ably.com/docs/account/app/notifications#push-notification-target) don't apply to this SDK.
 - The Push Notifications Admin API isn't supported ([REST](https://ably.com/docs/api/rest-sdk/push-admin), [realtime](https://ably.com/docs/api/realtime-sdk/push-admin)).
-- [Channel SUSPENDED state](https://github.com/ably/ably-go/issues/568) is only partly supported.
+- [Channel SUSPENDED state](https://github.com/ably/ably-pubsub-go/issues/568) is only partly supported.
 - Ping isn't implemented.
 
 ## Further reading
@@ -284,19 +293,19 @@ client, err := pubsub.NewRealtimeClient(
 - [Getting started with Pub/Sub using Go](https://ably.com/docs/getting-started/go)
 - [SDK setup for Go](https://ably.com/docs/getting-started/setup?lang=go)
 - [Ably Pub/Sub documentation](https://ably.com/docs/basics) and [examples](https://ably.com/examples?product=pubsub)
-- [UPDATING.md](./UPDATING.md): migrating from 1.x
-- [CHANGELOG.md](./CHANGELOG.md): release notes; all Ably releases are listed on [changelog.ably.com](https://changelog.ably.com)
-- [examples/](./examples): example programs
+- [UPDATING.md](https://github.com/ably/ably-pubsub-go/blob/main/UPDATING.md): migrating from 1.x
+- [CHANGELOG.md](https://github.com/ably/ably-pubsub-go/blob/main/CHANGELOG.md): release notes; all Ably releases are listed on [changelog.ably.com](https://changelog.ably.com)
+- [examples/](https://github.com/ably/ably-pubsub-go/tree/main/examples): example programs
 
 ## Contributing
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before contributing.
+Read [CONTRIBUTING.md](https://github.com/ably/ably-pubsub-go/blob/main/CONTRIBUTING.md) before contributing.
 
 ## Support, feedback and troubleshooting
 
 For help, visit Ably's [support page](https://ably.com/support). Report bugs and compatibility
-problems on [GitHub Issues](https://github.com/ably/ably-go/issues).
+problems on [GitHub Issues](https://github.com/ably/ably-pubsub-go/issues).
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE).
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/ably/ably-pubsub-go/blob/main/LICENSE).
