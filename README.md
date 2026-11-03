@@ -122,10 +122,54 @@ func main() {
 > [!IMPORTANT]
 > Server clients must authenticate with an API key. To use a token instead, see [Server clients and token authentication](https://ably.com/docs/auth/token#server-token-auth).
 
+The following endpoint issues token requests. Devices set `WithAuthURL` to its URL, for example
+`https://your-server.example.com/ably-auth`:
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/ably/ably-pubsub-go/v2/server/pubsub"
+)
+
+func main() {
+	ablyAPIKey := os.Getenv("ABLY_API_KEY")
+	client, err := pubsub.NewHTTPClient(pubsub.WithKey(ablyAPIKey))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/ably-auth", func(w http.ResponseWriter, r *http.Request) {
+		// Authenticate the caller first. Grant only the operations this user needs.
+		userID := "me" // the signed-in user's ID, from your session
+		tokenRequest, err := client.Auth.CreateTokenRequest(&pubsub.TokenParams{
+			ClientID: userID,
+			// Without a capability, the token gets all of the API key's capabilities.
+			Capability: `{"test-channel":["publish","subscribe","history"]}`,
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tokenRequest)
+	})
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+```
+
+See [token authentication](https://ably.com/docs/auth/token) for how devices use it.
+
 ### Device
 
-Authenticate a device with tokens issued by your own server, through `WithAuthURL` or
-`WithAuthCallback`. Never embed an API key in an application that runs on an end-user device.
+Authenticate a device with tokens issued by your own server, such as the endpoint above, through
+`WithAuthURL` or `WithAuthCallback`. Never embed an API key in an application that runs on an
+end-user device.
 
 ```go
 package main
